@@ -1,110 +1,27 @@
 #include "constants.h"
 #include "structs.h"
+#include "menu.h"
+#include "errors.h"
+#include "stackio.h"
+#include "measure_time.h"
 
-int work_with_stack_list(void)
+void free_stack_list(elem_stack_list_t **elem_stack_list)
 {
-    int choice, rc, num_add, num_del;
-    elem_stack_list_t *elem_stack_list = NULL;
-    array_of_freed_areas_t array;
-    char filename[MAX_FILENAME_LEN];
-    array.array = NULL;
-    array.size = 0;
+    elem_stack_list_t *p;
 
-    rc = menu(&choice);
-    if (rc)
+    while (*elem_stack_list != NULL)
     {
-        free_stack_list(&elem_stack_list);
-        free(array.array);
-        print_error(rc);
-        return INCORRECT_CHOICE;
+        p = (*elem_stack_list)->next;
+
+        free(*elem_stack_list);
+        *elem_stack_list = p;
     }
-    while (choice != 0)
-    {
-        if (choice == 1)
-        {   
-            rc = read_cnt_add_to_stack_list(&num_add, elem_stack_list);
-
-            if (rc)
-            {
-                print_error(rc);
-                free_stack_list(&elem_stack_list);
-                free(array.array);
-                return rc;
-            }
-            
-            if ((elem_stack_list != NULL && elem_stack_list->num_elem != MAX_STACK_SIZE) ||
-                 elem_stack_list == NULL)
-            {
-                rc = add_elem_to_stack_list(&elem_stack_list, num_add);
-                if (rc)
-                {
-                    print_error(rc);
-                    return rc;
-                }
-            }
-        }
-        else if (choice == 2)
-        {
-            rc = read_stack_list_file(&num_add, elem_stack_list, filename);
-            if (rc)
-            {
-                print_error(rc);
-                free_stack_list(&elem_stack_list);
-                free(array.array);
-                return rc;
-            }
-        }
-        else if (choice == 3)
-        {
-            rc = read_number_of_remove_elem_from_stack_list(&num_del, elem_stack_list);
-
-            if (rc)
-            {
-                print_error(rc);
-                free_stack_list(&elem_stack_list);
-                free(array.array);
-                return rc;
-            }
-
-            if (elem_stack_list != NULL)
-            {
-                rc = add_addresses_of_removed_elem_to_array(&array, num_del, elem_stack_list);
-
-                if (rc)
-                {
-                    print_error(rc);
-                    free_stack_list(&elem_stack_list);
-                    return rc;
-                }
-
-                remove_elem_from_stack_list(&elem_stack_list, num_del);
-            }
-        }
-        else if (choice == 4)
-        {
-            print_stack_list(&elem_stack_list);
-            print_array(&array);
-        }
-        else if (choice == 5)
-        {
-            print_descend_sequen_stack_list(elem_stack_list, stdout);
-        }
-        else if (choice == 0)
-        {
-            free_stack_list(&elem_stack_list);
-            free(array.array);
-            break;
-        }
-    }
-
-    return EXIT_SUCCESS;
 }
 
-int add_elem_to_stack_list(elem_stack_list_t **elem_stack_list, int num_add)
+int add_elem_to_stack_list(elem_stack_list_t **elem_stack_list, int num_add, array_of_freed_areas_t *array)
 {
     elem_stack_list_t *new_elem;
-    int rc;
-
+	
     printf("Введите %d элемент(a, ов) стека.\n", num_add);
 
     for (int i = 0; i < num_add; i++)
@@ -127,22 +44,10 @@ int add_elem_to_stack_list(elem_stack_list_t **elem_stack_list, int num_add)
         
         new_elem->next = *elem_stack_list;
         *elem_stack_list = new_elem;
+        if (array->size != 0)
+            array->size--;
     }
-    
     return EXIT_SUCCESS;
-}
-
-void free_stack_list(elem_stack_list_t **elem_stack_list)
-{
-    elem_stack_list_t *p;
-
-    while (*elem_stack_list != NULL)
-    {
-        p = (*elem_stack_list)->next;
-
-        free(*elem_stack_list);
-        *elem_stack_list = p;
-    }
 }
 
 int add_addresses_of_removed_elem_to_array(array_of_freed_areas_t *array, int num_del, elem_stack_list_t *elem_stack_list)
@@ -152,7 +57,8 @@ int add_addresses_of_removed_elem_to_array(array_of_freed_areas_t *array, int nu
     for (int i = 0; i < num_del; i++)
     {
         p = realloc(array->array, (array->size + 1) * sizeof(elem_stack_list_t*));
-
+		if (p == NULL)
+			printf("why tho");
         if (!p)
         {
             free(array->array);
@@ -240,6 +146,111 @@ int fill_stack_list_randomly(elem_stack_list_t **elem_stack_list, int numb_add_e
         
         new_elem->next = *elem_stack_list;
         *elem_stack_list = new_elem;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int work_with_stack_list(void)
+{
+    int choice, rc, num_add, num_del;
+    elem_stack_list_t *elem_stack_list = NULL;
+    array_of_freed_areas_t array;
+    char filename[MAX_FILENAME_LEN];
+    array.array = NULL;
+    array.size = 0;
+
+    rc = menu(&choice);
+    if (rc)
+    {
+        free_stack_list(&elem_stack_list);
+        free(array.array);
+        print_error(rc);
+        return INCORRECT_CHOICE;
+    }
+    while (choice != 0)
+    {
+        if (choice == 1)
+        {   
+            rc = read_cnt_add_to_stack_list(&num_add, elem_stack_list);
+
+            if (rc)
+            {
+                print_error(rc);
+                free_stack_list(&elem_stack_list);
+                free(array.array);
+                return rc;
+            }
+            
+            if ((elem_stack_list != NULL && elem_stack_list->num_elem != MAX_STACK_SIZE) ||
+                 elem_stack_list == NULL)
+            {
+                rc = add_elem_to_stack_list(&elem_stack_list, num_add, &array);
+                if (rc)
+                {
+                    print_error(rc);
+                    return rc;
+                }
+            }
+        }
+        else if (choice == 2)
+        {
+            rc = read_stack_list_file(&elem_stack_list, &num_add, filename, &array);
+            if (rc)
+            {
+                print_error(rc);
+                free_stack_list(&elem_stack_list);
+                free(array.array);
+                return rc;
+            }
+        }
+        else if (choice == 3)
+        {
+            rc = read_number_of_remove_elem_from_stack_list(&num_del, elem_stack_list);
+
+            if (rc)
+            {
+                print_error(rc);
+                free_stack_list(&elem_stack_list);
+                free(array.array);
+                return rc;
+            }
+
+            if (elem_stack_list != NULL)
+            {
+                rc = add_addresses_of_removed_elem_to_array(&array, num_del, elem_stack_list);
+
+                if (rc)
+                {
+                    print_error(rc);
+                    free_stack_list(&elem_stack_list);
+                    return rc;
+                }
+
+                remove_elem_from_stack_list(&elem_stack_list, num_del);
+            }
+        }
+        else if (choice == 4)
+        {
+            print_stack_list(&elem_stack_list);
+            print_array(&array);
+        }
+        else if (choice == 5)
+        {
+            print_descend_sequen_stack_list(elem_stack_list, stdout);
+        }
+        else if (choice == 0)
+        {
+            free_stack_list(&elem_stack_list);
+            free(array.array);
+            return EXIT_SUCCESS;
+        }
+        rc = menu(&choice);
+        if (rc)
+        {
+            printf("%d", choice);
+            return INCORRECT_CHOICE;
+        }
     }
 
     return EXIT_SUCCESS;

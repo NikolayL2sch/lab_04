@@ -1,5 +1,10 @@
 #include "constants.h"
 #include "structs.h"
+#include "menu.h"
+#include "errors.h"
+#include "stackio.h"
+#include "stack_arr_funcs.h"
+#include "stack_list_funcs.h"
 
 uint64_t tick(void)
 {
@@ -19,17 +24,20 @@ uint64_t tick(void)
 
 void print_time(int64_t start, int64_t end)
 {
-    printf("%lld тактов, %.10lf секунд\n", end - start, (double)(end - start)/GHZ);  
+    printf("%d tacts, %.10lf seconds\n", (int)(end - start), (double)(end - start)/GHZ);  
 }
 
 int compare_stacks(void)
 {
-    int choice, rc;
+    int choice, rc, num_add;
+    array_of_freed_areas_t array_list;
     int array[MAX_STACK_SIZE];
     stack_array_t stack_array;
-
+	char filename [MAX_FILENAME_LEN];
     stack_array.size = 0;
     stack_array.ptr = array - 1;
+	array_list.size = 0;
+	array_list.array = NULL;
 
     elem_stack_list_t *elem_stack_list = NULL;
     
@@ -45,62 +53,95 @@ int compare_stacks(void)
     }
     while (choice != 0)
     {
-        if (choice == 3)
-        {   
-           int num_del;
-            rc = read_cnt_del_stack_arr(&num_del, stack_array.size);
-
+    	if (choice == 2)
+    	{
+    		rc = read_stack_list_file(&elem_stack_list, &num_add, filename, &array_list);
             if (rc)
-            {  
+            {
                 print_error(rc);
                 free_stack_list(&elem_stack_list);
+                free(array_list.array);
+                return rc;
+            }
+            printf("\n^List\n");
+            rc = read_stack_arr_file(&stack_array, &num_add, stack_array.size, filename);
+            if (rc)
+            {
+                print_error(rc);
+                return rc;
+            }
+            printf("\n^Array\n");
+    	}
+        if (choice == 3)
+        {   
+            int num_del;
+            rc = read_number_of_remove_elem_from_stack_array(&num_del, stack_array.size);
+			
+            if (rc)
+            {
+                print_error(rc);
                 return rc;
             }
 
-            printf("\n");
-
             if (stack_array.size != 0)
             {
-                for (int i = 0; i < NUMBER_OF_RUNS; i++)
-                {
-                    start += tick();
-                    remove_elem_from_stack_array(&stack_array, num_del);
-                    end += tick();
-
-                    fill_stack_array_randomly(&stack_array, num_del);
-                }
-                
+            	start += tick();
                 remove_elem_from_stack_array(&stack_array, num_del);
-
-                print_result(start / NUMBER_OF_RUNS, end / NUMBER_OF_RUNS);
-
-                start = 0;
-                end = 0;
-
-                printf("\n");
-                
-                for (int i = 0; i < NUMBER_OF_RUNS; i++)
-                {
-                    start += tick();
-                    remove_elem_from_stack_list(&elem_stack_list, num_del);
-                    end += tick();
-
-                    fill_stack_list_randomly(&elem_stack_list, num_del);
-                }
-
-                remove_elem_from_stack_list(&elem_stack_list, num_del);
-
-                print_result(start / NUMBER_OF_RUNS, end / NUMBER_OF_RUNS);
-
-                start = 0;
-                end = 0;
+                end += tick();
             }
+            print_time(start, end);
+			printf("\n^Array\n");
+            start = 0;
+            end = 0;
+
+            printf("\n");
+            
+            rc = read_number_of_remove_elem_from_stack_list(&num_del, elem_stack_list);
+
+            if (rc)
+            {
+                print_error(rc);
+                free_stack_list(&elem_stack_list);
+                free(array_list.array);
+                return rc;
+            }
+            
+            if (elem_stack_list != NULL)
+            {
+            	start+=tick();
+                rc = add_addresses_of_removed_elem_to_array(&array_list, num_del, elem_stack_list);
+
+                if (rc)
+                {
+                    print_error(rc);
+                    free_stack_list(&elem_stack_list);
+                    return rc;
+                }
+				printf("here");
+                remove_elem_from_stack_list(&elem_stack_list, num_del);
+                end+=tick();
+            }
+           
+    		print_time(start, end);
+			
+			printf("\n^List\n");
+            start = 0;
+            end = 0;
         }
         else if (choice == 4)
         {
+        	start+=tick();
             print_stack_array(&stack_array);
-            printf("\n");
+            end+=tick();
+            print_time(start, end);
+            printf("\n^Array\n");
+            start = 0;
+            end = 0;
+            start+=tick();
             print_stack_list(&elem_stack_list);
+            end+=tick();
+            print_time(start, end);
+            printf("\n^List\n");
         }
         else if (choice == 5)
         {
@@ -112,42 +153,34 @@ int compare_stacks(void)
                 free_stack_list(&elem_stack_list);
                 return FILE_NOT_FOUND;
             }
-
-            for (int i = 0; i < NUMBER_OF_RUNS; i++)
-            {
-                start += tick();
-                print_descend_sequen_stack_array(stack_array, f);
-                end += tick();
-            }
-        
-            print_result(start / NUMBER_OF_RUNS, end / NUMBER_OF_RUNS);
+            start+=tick();
+            print_descend_sequen_stack_array(stack_array, f);
+			end+=tick();
+			print_time(start, end);
 
             start = 0;
             end = 0;
 
             printf("\n");
-
-            for (int i = 0; i < NUMBER_OF_RUNS; i++)
-            {
-                start += tick();
-                print_descend_sequen_stack_list(elem_stack_list, f);
-                end += tick();
-            }
-
-            print_result(start / NUMBER_OF_RUNS, end / NUMBER_OF_RUNS);
+            start += tick();
+            print_descend_sequen_stack_list(elem_stack_list, f);
+            end += tick();
+			print_time(start, end);
 
             start = 0;
             end = 0;
-
-            // print_descend_sequen_stack_array(stack_array, stdout);
-            // printf("\n");
-            // print_descend_sequen_stack_list(elem_stack_list, stdout);
         }
         else if (choice == 0)
         {
             free_stack_list(&elem_stack_list);
             break;
-        }       
+        }
+        rc = menu(&choice);
+        if (rc)
+        {
+            printf("%d", choice);
+            return INCORRECT_CHOICE;
+        }
     }
     return EXIT_SUCCESS;
 }

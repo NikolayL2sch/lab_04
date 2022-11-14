@@ -6,6 +6,7 @@
 #include <string.h>
 #include <time.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 #define DATA_EMPTY_ERR 2
 #define FILE_NOT_FOUND 3

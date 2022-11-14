@@ -1,5 +1,6 @@
 #include "constants.h"
 #include "structs.h"
+#include "measure_time.h"
 
 int read_stack_type(int *stack_type)
 {
@@ -28,10 +29,12 @@ int read_cnt_add_stack_arr(int *num_add, int size)
 
 int read_stack_arr_file(stack_array_t *stack_array, int *num_add, int size, char *filename)
 {
+	int64_t start = 0, end = 0;
     if (size == MAX_STACK_SIZE)
         return STACK_IS_FULL;
-
+	
     printf("Введите название файла, (кол-во добавляемых элементов не более %d)\n", MAX_STACK_SIZE - size);
+    scanf("\n");
     if (!fgets(filename, MAX_FILENAME_LEN, stdin))
     {
     	//printf("|%s|",filename);
@@ -56,14 +59,17 @@ int read_stack_arr_file(stack_array_t *stack_array, int *num_add, int size, char
     if (size == MAX_STACK_SIZE)
         return STACK_IS_FULL;
     
-    for (int i = 0; i < num_add; i++)
-    {
+    for (int i = 0; i < *num_add; i++)
+    {	
+    	start+=tick();
         stack_array->ptr++;
         if (fscanf(f_in, "%d", stack_array->ptr) != 1)
             return INCORRECT_DATA;
 
         stack_array->size++;
+        end+=tick();
     }
+    print_time(start, end);
     fclose(f_in);
     return EXIT_SUCCESS;
 }
@@ -84,12 +90,13 @@ void print_stack_array(stack_array_t *stack_array)
 {
     printf("Текущий размер стека - %d\n\n", stack_array->size);
 
-    int *p = stack_array->ptr;
-
+    int *p = (void *) stack_array->ptr;
+	printf("_\n");
     for (int i = stack_array->size; i > 0; i--)
     {
         printf("%d\n", *(p--));
     }
+    printf("-\n");
 }
 
 int read_cnt_add_to_stack_list(int *num_add, elem_stack_list_t *elem_stack_list)
@@ -116,72 +123,79 @@ int read_cnt_add_to_stack_list(int *num_add, elem_stack_list_t *elem_stack_list)
     return EXIT_SUCCESS;
 }
 
-int read_stack_list_file(elem_stack_list_t *elem_stack_list, int *num_add, int size, char *filename)
+int read_stack_list_file(elem_stack_list_t **elem_stack_list, int *num_add, char *filename, array_of_freed_areas_t *array)
 {
-    if (elem_stack_list != NULL && elem_stack_list->num_elem == MAX_STACK_SIZE)
+	char f[50];
+	int64_t start = 0, end = 0;
+    if (*elem_stack_list != NULL && (*elem_stack_list)->num_elem == MAX_STACK_SIZE)
         return STACK_IS_FULL;
-
-    if (elem_stack_list != NULL)
-        printf("Введите название файла (кол-во добавляемых элементов не более %d): ", 
-        MAX_STACK_SIZE - elem_stack_list->num_elem);
+	
+    if (*elem_stack_list != NULL)
+        printf("Введите название файла (кол-во добавляемых элементов не более %d): \n", 
+        MAX_STACK_SIZE - (*elem_stack_list)->num_elem);
     else
-        printf("Введите название файла (кол-во добавляемых элементов не более 10000): ");
+        printf("Введите название файла (кол-во добавляемых элементов не более 10000): \n");
     
-    if (!fgets(filename, MAX_FILENAME_LEN, stdin))
+    if (scanf("%s", f) != 1)
     {
-    	//printf("|%s|",filename);
+    	//printf("|%s|",f);
         return INCORRECT_FILENAME;
 	}
-    int len = strlen(filename);
-    if (filename[len - 1] == '\n')
+    int len = strlen(f);
+    if (f[len - 1] == '\n')
    	{
-        filename[--len] = '\0';
+        f[--len] = '\0';
     }
-	//printf("|%s|",filename);
     if (len > MAX_FILENAME_LEN - 1)
         return INCORRECT_FILENAME;
     
-    FILE *f_in = fopen(filename, "r");
-    if (f_in == NULL || feof(f_in))
-        return INCORRECT_FILENAME;
+    FILE *f_in = fopen(f, "r");
+    if (f_in == NULL) {
+    	//char cwd[50];
+    	//getcwd(cwd, sizeof(cwd));
+    	//printf("%s", cwd);
+        perror("fopen()");
+        return EXIT_FAILURE;
+    }
     
     if (fscanf(f_in, "%d", num_add) != 1)
         return INCORRECT_DATA;
     
     if (elem_stack_list == NULL)
-    {
+    {	
         if (*num_add > MAX_STACK_SIZE)
             return STACK_OVERFLOW;
     }
-    else if (elem_stack_list->num_elem + *num_add > MAX_STACK_SIZE)
-        return STACK_OVERFLOW;
-    
-    if ((elem_stack_list != NULL && elem_stack_list->num_elem != MAX_STACK_SIZE) || elem_stack_list == NULL)
+     
+    if ((*elem_stack_list != NULL && (*elem_stack_list)->num_elem != MAX_STACK_SIZE) || *elem_stack_list == NULL)
     {
         elem_stack_list_t *new_elem;
 
-        for (int i = 0; i < num_add; i++)
+        for (int i = 0; i < *num_add; i++)
         {
+        	start+=tick();
             new_elem = malloc(sizeof(elem_stack_list_t));
 
             if (!new_elem)
                 return MEMORY_ERROR;
 
-            if (fscanf(f_in, "%d", new_elem->elem) != 1)
+            if (fscanf(f_in, "%d", &(new_elem->elem)) != 1)
                 return INCORRECT_DATA;
 
-            if (elem_stack_list == NULL)
+            if (*elem_stack_list == NULL)
                 new_elem->num_elem = 1;
             else
-                new_elem->num_elem = elem_stack_list->num_elem + 1;
-            
-            new_elem->next = elem_stack_list;
-            elem_stack_list = new_elem;
+                new_elem->num_elem = (*elem_stack_list)->num_elem + 1;
+            new_elem->next = *elem_stack_list;
+            *elem_stack_list = new_elem;
+            if (array->size != 0)
+            	array->size--;
+            end+=tick();
         }
+        print_time(start, end);
     }
     else
         return EXIT_FAILURE;
-    
     fclose(f_in);
     return EXIT_SUCCESS;
 }
@@ -207,12 +221,13 @@ void print_stack_list(elem_stack_list_t **elem_stack_list)
         printf("Текущий размер стека - %d\n\n", (*elem_stack_list)->num_elem);
     
         elem_stack_list_t *p = *elem_stack_list;
-
+		printf("_\n");
         while (p != NULL)
         {
-            printf("%-10d %p\n", p->elem, p);
+            printf("%-10d %p\n", p->elem, (void *) p);
             p = p->next;
         }
+        printf("-\n");
     }
 }
 
@@ -222,11 +237,23 @@ void print_array(array_of_freed_areas_t *array)
 
     for (int i = 0; i < array->size; i++)
     {
-        printf("%p", array->array[i]);
+        printf("%p", (void*) array->array[i]);
 
         if (i != array->size - 1)
             printf(", ");
     }
 
     printf("]\n");
+}
+
+int read_number_of_remove_elem_from_stack_array(int *num_del, int size)
+{
+    if (size == 0)
+        return STACK_EMPTY;
+
+    printf("Введите кол-во удаляемых элементов (не более %d): ", size);
+
+    if (scanf("%d", num_del) != 1 || *num_del < 0 || *num_del > size)
+        return INCORRECT_DATA;
+    return EXIT_SUCCESS;
 }

@@ -15,7 +15,7 @@ void print_menu(void)
 
 int menu(int *choice)
 {
-    int *choice = -1;
+    *choice = -1;
 
     if (*choice != 0)
     {
