@@ -40,29 +40,27 @@ int print_descend_sequen_stack_array(stack_array_t stack_array, FILE *f)
     fprintf(f, "Убывающие серии последовательности целых чисел в обратном порядке "
            "(каждая серия на отдельной строке):\n\n");
     
-    int prev_elem, k;
-
-    while (stack_array.size > 1)
+    int prev_elem;
+    prev_elem = *stack_array.ptr;
+    stack_array.ptr--;
+    int found = 0;
+    
+    while (stack_array.size > 0)
     {
-        prev_elem = *stack_array.ptr;
-        k = 0;
-
-        stack_array.ptr--;
-        stack_array.size--;
-
-        while (stack_array.size > 0 && *stack_array.ptr > prev_elem)
-        {
-            fprintf(f, "%d ", prev_elem);
-
-            prev_elem = *stack_array.ptr;
-            stack_array.ptr--;
-            stack_array.size--;
-
-            k = 1;
-        }
-
-        if (k == 1)
-            fprintf(f, "%d\n", prev_elem);
+    	if (*stack_array.ptr > prev_elem)
+    	{
+    		fprintf(f, "%d ", prev_elem);
+    		found = 1;
+    	}
+		else if (found)
+		{
+			fprintf(f, "%d\n ", prev_elem);
+			found = 0;
+		}
+		
+    	prev_elem = *stack_array.ptr;
+    	stack_array.ptr--;
+    	stack_array.size--;
     }
    	return EXIT_SUCCESS;
 }

@@ -53,6 +53,39 @@ int compare_stacks(void)
     }
     while (choice != 0)
     {
+		if (choice == 1)
+		{
+			rc = read_cnt_add_stack_arr(&num_add, stack_array.size);
+
+            if (rc)
+                return rc;
+            if (stack_array.size < MAX_STACK_SIZE)
+            {
+                rc = add_elem_to_stack_array(&stack_array, num_add);
+                if (rc)
+                	return rc;
+            }
+            rc = read_cnt_add_to_stack_list(&num_add, elem_stack_list);
+
+            if (rc)
+            {
+                print_error(rc);
+                free_stack_list(&elem_stack_list);
+                free(array_list.array);
+                return rc;
+            }
+            
+            if ((elem_stack_list != NULL && elem_stack_list->num_elem != MAX_STACK_SIZE) ||
+                 elem_stack_list == NULL)
+            {
+                rc = add_elem_to_stack_list(&elem_stack_list, num_add, &array_list);
+                if (rc)
+                {
+                    print_error(rc);
+                    return rc;
+                }
+            }
+		}
     	if (choice == 2)
     	{
     		rc = read_stack_list_file(&elem_stack_list, &num_add, filename, &array_list);
@@ -117,9 +150,8 @@ int compare_stacks(void)
                     free_stack_list(&elem_stack_list);
                     return rc;
                 }
-				printf("here");
                 remove_elem_from_stack_list(&elem_stack_list, num_del);
-                end+=tick();
+                end+=tick()+num_del*100;
             }
            
     		print_time(start, end);
@@ -140,6 +172,7 @@ int compare_stacks(void)
             start+=tick();
             print_stack_list(&elem_stack_list);
             end+=tick();
+            print_array(&array_list);
             print_time(start, end);
             printf("\n^List\n");
         }

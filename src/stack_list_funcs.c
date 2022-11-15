@@ -99,28 +99,29 @@ void print_descend_sequen_stack_list(elem_stack_list_t *elem_stack_list, FILE *f
 
     fprintf(f, "Убывающие серии последовательности целых чисел в обратном порядке "
            "(каждая серия на отдельной строке):\n\n");
+	
+	int prev_elem;
+    prev_elem = elem_stack_list->elem;
+    elem_stack_list = elem_stack_list->next;
+    int found = 0;
     
-    int prev_elem, k;
-
     while (elem_stack_list != NULL && elem_stack_list->next != NULL)
     {
-        prev_elem = elem_stack_list->elem;
-        k = 0;
-
-        elem_stack_list = elem_stack_list->next;
-
-        while (elem_stack_list != NULL &&
-               elem_stack_list->elem > prev_elem)
-        {
-            fprintf(f, "%d ", prev_elem);
-
-            prev_elem = elem_stack_list->elem;
-            elem_stack_list = elem_stack_list->next;
-            k = 1;
-        }
-
-        if (k == 1)
-            fprintf(f, "%d\n", prev_elem);
+    	if (elem_stack_list->elem > prev_elem)
+    	{
+    		printf("here1\n");
+    		fprintf(f, "%d ", prev_elem);
+    		found = 1;
+    	}
+		else if (found)
+		{
+			printf("here2\n");
+			fprintf(f, "%d\n ", prev_elem);
+			found = 0;
+		}
+		
+    	prev_elem = elem_stack_list->elem;
+    	elem_stack_list = elem_stack_list->next;
     }
 }
 
