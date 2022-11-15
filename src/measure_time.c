@@ -145,7 +145,7 @@ int compare_stacks(void)
         }
         else if (choice == 5)
         {
-            FILE *f = fopen("out.txt", "w+");
+            FILE *f = fopen("out.txt", "w");
 
             if (!f)
             {
@@ -153,6 +153,7 @@ int compare_stacks(void)
                 free_stack_list(&elem_stack_list);
                 return FILE_NOT_FOUND;
             }
+
             start+=tick();
             print_descend_sequen_stack_array(stack_array, f);
 			end+=tick();
@@ -169,6 +170,7 @@ int compare_stacks(void)
 
             start = 0;
             end = 0;
+            fclose(f);
         }
         else if (choice == 0)
         {
