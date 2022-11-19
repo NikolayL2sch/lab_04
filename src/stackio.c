@@ -88,14 +88,18 @@ int read_cnt_del_stack_arr(int *num_del, int size)
 
 void print_stack_array(stack_array_t *stack_array)
 {
+    int64_t start = 0, end = 0;
     printf("Текущий размер стека - %d\n\n", stack_array->size);
 
     int *p = (void *) stack_array->ptr;
 	printf("_\n");
+    start+=tick();
     for (int i = stack_array->size; i > 0; i--)
     {
         printf("%d\n", *(p--));
     }
+    end+=tick();
+    print_time(start, end);
     printf("-\n");
 }
 
@@ -219,15 +223,18 @@ void print_stack_list(elem_stack_list_t **elem_stack_list)
     else
     {
         printf("Текущий размер стека - %d\n\n", (*elem_stack_list)->num_elem);
-    
+        int64_t start = 0, end = 0;
         elem_stack_list_t *p = *elem_stack_list;
 		printf("_\n");
+        start+=tick();
         while (p != NULL)
         {
             printf("%-10d %p\n", p->elem, (void *) p);
             p = p->next;
         }
+        end+=tick();
         printf("-\n");
+        print_time(start, end);
     }
 }
 

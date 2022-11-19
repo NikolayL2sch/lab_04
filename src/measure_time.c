@@ -40,8 +40,6 @@ int compare_stacks(void)
 	array_list.array = NULL;
 
     elem_stack_list_t *elem_stack_list = NULL;
-    
-    int64_t start = 0, end = 0;
 
     //1 - массив, 2 - список
 
@@ -117,20 +115,12 @@ int compare_stacks(void)
             }
 
             if (stack_array.size != 0)
-            {
-            	start += tick();
                 remove_elem_from_stack_array(&stack_array, num_del);
-                end += tick();
-            }
-            print_time(start, end);
-			printf("\n^Array\n");
-            start = 0;
-            end = 0;
 
+			printf("\n^Array\n");
             printf("\n");
             
             rc = read_number_of_remove_elem_from_stack_list(&num_del, elem_stack_list);
-
             if (rc)
             {
                 print_error(rc);
@@ -141,7 +131,6 @@ int compare_stacks(void)
             
             if (elem_stack_list != NULL)
             {
-            	start+=tick();
                 rc = add_addresses_of_removed_elem_to_array(&array_list, num_del, elem_stack_list);
 
                 if (rc)
@@ -151,29 +140,15 @@ int compare_stacks(void)
                     return rc;
                 }
                 remove_elem_from_stack_list(&elem_stack_list, num_del);
-                end+=tick()+num_del*100;
             }
-           
-    		print_time(start, end);
 			
 			printf("\n^List\n");
-            start = 0;
-            end = 0;
         }
         else if (choice == 4)
         {
-        	start+=tick();
             print_stack_array(&stack_array);
-            end+=tick();
-            print_time(start, end);
             printf("\n^Array\n");
-            start = 0;
-            end = 0;
-            start+=tick();
             print_stack_list(&elem_stack_list);
-            end+=tick();
-            print_array(&array_list);
-            print_time(start, end);
             printf("\n^List\n");
         }
         else if (choice == 5)
@@ -187,22 +162,9 @@ int compare_stacks(void)
                 return FILE_NOT_FOUND;
             }
 
-            start+=tick();
             print_descend_sequen_stack_array(stack_array, f);
-			end+=tick();
-			print_time(start, end);
-
-            start = 0;
-            end = 0;
-
             printf("\n");
-            start += tick();
             print_descend_sequen_stack_list(elem_stack_list, f);
-            end += tick();
-			print_time(start, end);
-
-            start = 0;
-            end = 0;
             fclose(f);
         }
         else if (choice == 0)

@@ -78,14 +78,16 @@ int add_addresses_of_removed_elem_to_array(array_of_freed_areas_t *array, int nu
 void remove_elem_from_stack_list(elem_stack_list_t **elem_stack_list, int num_del)
 {
     elem_stack_list_t *new_elem;
-
+    int64_t start = 0, end = 0;
+    start+=tick();
     for (int i = 0; i < num_del; i++)
     {
         new_elem = (*elem_stack_list)->next;
         free(*elem_stack_list);
         *elem_stack_list = new_elem;
     }
-
+    end+=tick();
+    print_time(start, end);
     printf("%d элемент(а, ов) успешно удалено из стека.\n", num_del);
 }
 
@@ -104,25 +106,30 @@ void print_descend_sequen_stack_list(elem_stack_list_t *elem_stack_list, FILE *f
     prev_elem = elem_stack_list->elem;
     elem_stack_list = elem_stack_list->next;
     int found = 0;
-    
-    while (elem_stack_list != NULL && elem_stack_list->next != NULL)
+    int64_t start = 0, end = 0;
+    start+=tick();
+    while (elem_stack_list != NULL)
     {
     	if (elem_stack_list->elem > prev_elem)
     	{
-    		printf("here1\n");
     		fprintf(f, "%d ", prev_elem);
     		found = 1;
     	}
 		else if (found)
 		{
-			printf("here2\n");
 			fprintf(f, "%d\n ", prev_elem);
 			found = 0;
 		}
-		
+        if (elem_stack_list -> next == NULL)
+            break;
+        
     	prev_elem = elem_stack_list->elem;
     	elem_stack_list = elem_stack_list->next;
     }
+    if (elem_stack_list->elem > prev_elem)
+        fprintf(f, "%d\n", elem_stack_list->elem);
+    end+=tick();
+    print_time(start, end);
 }
 
 int fill_stack_list_randomly(elem_stack_list_t **elem_stack_list, int numb_add_elem)

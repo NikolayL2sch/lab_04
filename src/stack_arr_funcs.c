@@ -3,6 +3,7 @@
 #include "menu.h"
 #include "errors.h"
 #include "stackio.h"
+#include "measure_time.h"
 
 int add_elem_to_stack_array(stack_array_t *stack_array, int num_add)
 {
@@ -21,16 +22,21 @@ int add_elem_to_stack_array(stack_array_t *stack_array, int num_add)
 
 void remove_elem_from_stack_array(stack_array_t *stack_array, int num_del)
 {
+    int64_t start = 0, end = 0;
+    start+=tick();
     for (int i = 0; i < num_del; i++)
     {
         stack_array->ptr--;
         stack_array->size--;
     }
+    end+=tick();
+    print_time(start, end);
     printf("%d элемент(а, ов) успешно удалено из стека.\n", num_del);
 }
 
 int print_descend_sequen_stack_array(stack_array_t stack_array, FILE *f)
 {
+    int64_t start = 0, end = 0;
     if (stack_array.size == 0)
     {
         fprintf(f, "Стек пуст.\n");
@@ -44,7 +50,7 @@ int print_descend_sequen_stack_array(stack_array_t stack_array, FILE *f)
     prev_elem = *stack_array.ptr;
     stack_array.ptr--;
     int found = 0;
-    
+    start+=tick();
     while (stack_array.size > 0)
     {
     	if (*stack_array.ptr > prev_elem)
@@ -62,6 +68,8 @@ int print_descend_sequen_stack_array(stack_array_t stack_array, FILE *f)
     	stack_array.ptr--;
     	stack_array.size--;
     }
+    end+=tick();
+    print_time(start, end);
    	return EXIT_SUCCESS;
 }
 
